@@ -1,0 +1,21 @@
+import requests
+from datetime import datetime, timedelta
+
+def get_exchange_rates():
+    base_url = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange"
+    today = datetime.now()
+    rates = []
+
+    for i in range(7):
+        date = (today - timedelta(days=i)).strftime('%Y%m%d')
+        response = requests.get(f"{base_url}?date={date}&json")
+        if response.status_code == 200:
+            rates.append(response.json())
+        else:
+            print(f"Failed to get data for {date}")
+
+    return rates
+
+exchange_rates = get_exchange_rates()
+for day_rates in exchange_rates:
+    print(day_rates)
