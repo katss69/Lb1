@@ -1,0 +1,59 @@
+import requests
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
+# Функція для отримання курсів валют за останні 7 днів
+def get_exchange_rates():
+    base_url = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange"
+    today = datetime.now()
+    rates = []
+
+    for i in range(7):
+        date = (today - timedelta(days=i)).strftime('%Y%m%d')  # Формат YYYYMMDD
+        response = requests.get(f"{base_url}?date={date}&json")
+        if response.status_code == 200:
+            rates.append({"date": (today - timedelta(days=i)).strftime('%d-%m-%Y'), "data": response.json()})
+        else:
+            print(f"Помилка отримання даних за {date}")
+
+    return rates
+
+# Функція для побудови графіка зміни курсу валюти
+def plot_exchange_rate(data, currency_code):
+    dates = []
+    rates = []
+
+    for day_data in data:
+        for rate in day_data["data"]:
+            if rate['cc'] == currency_code:  # 'cc' — код валюти, наприклад, USD або EUR
+                dates.append(day_data["date"])
+                rates.append(float(rate['rate']))
+
+    dates.reverse()  # Від найдавнішої до найновішої дати
+    rates.reverse()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(dates, rates, marker='o', label=currency_code, linestyle='-', color='b')
+    plt.title(f"Курс {currency_code} за останній тиждень")
+    plt.xlabel("Дата")
+    plt.ylabel("Курс (UAH)")
+    plt.grid(True)
+    plt.legend()
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+# 1. Отримуємо курси валют
+exchange_rates = get_exchange_rates()
+
+# 2. Виводимо отримані курси
+for day in exchange_rates:
+    print(f"Дата: {day['date']}")
+    for rate in day['data']:
+        if rate['cc'] in ["USD", "EUR"]:  # Відображаємо лише USD та EUR
+            print(f"{rate['cc']}: {rate['rate']}")
+    print("-" * 20)
+
+# 3. Побудова графіка для USD
+plot_exchange_rate(exchange_rates, 'USD')
+
